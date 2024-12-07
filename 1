@@ -1,0 +1,65 @@
+import cv2
+import matplotlib.pyplot as plt
+
+def load_image(path):
+    # Загрузка изображения
+    image = cv2.imread(path, cv2.IMREAD_UNCHANGED)
+    
+    if image is None:
+        return None, False
+    
+    # Проверяем наличие альфа-канала
+    has_alpha_channel = len(image.shape) == 3 and image.shape[2] == 4
+    
+    # Преобразуем изображение в RGB
+    if has_alpha_channel:
+        bgr = image[:, :, :3]
+        alpha = image[:, :, 3]
+        
+        # Делаем прозрачные пиксели белыми
+        white_background = 255 * np.ones_like(bgr)
+        rgb = np.where(alpha == 0, white_background, bgr)
+    else:
+        rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    
+    return rgb, has_alpha_channel
+
+
+# Основной цикл программы
+while True:
+    try:
+        # Запрашиваем путь к изображению
+        path = input("Введите путь к изображению (jpg или png): ")
+        
+        # Проверяем расширение файла
+        extension = path.split('.')[-1].lower()
+        if extension not in ['jpg', 'png']:
+            raise ValueError(f'Неподдерживаемый формат файла: {extension}')
+        
+        # Загружаем изображение
+        image, has_alpha_channel = load_image(path)
+        
+        if image is None:
+            raise IOError('Ошибка при загрузке изображения')
+        
+        # Выводим сообщение о корректной загрузке
+        print(f'Изображение успешно загружено ({path})')
+        
+        # Сообщение об обнаружении альфа-канала
+        if has_alpha_channel:
+            print('Обнаружены прозрачные пиксели. Они были заменены.')
+        
+        # Сохраняем обработанное изображение
+        new_path = f"{'.'.join(path.split('.')[:-1])}_corrected.png"
+        plt.imsave(new_path, image)
+        
+        # Выводим изображение на экран
+        plt.figure(figsize=(10, 10))
+        plt.title('Исправленное изображение')
+        plt.imshow(image)
+        plt.show()
+        
+        break
+    except Exception as e:
+        print(e)
+        print('Повторите ввод пути к файлу.')
